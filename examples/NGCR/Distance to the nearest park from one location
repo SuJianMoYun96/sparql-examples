@@ -1,0 +1,28 @@
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
+PREFIX unit: <http://qudt.org/vocab/unit/>
+PREFIX lgdo: <http://linkedgeodata.org/ontology/>
+PREFIX ogc: <http://www.opengis.net/rdf#>
+PREFIX geom: <http://linkedgeodata.org/geometry/>
+
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX osmkey: <https://www.openstreetmap.org/wiki/Key:>
+SELECT ?park ?distance ?geom
+   WHERE {
+      BIND("POINT (4.895168 52.370216)"^^geo:wktLiteral AS ?origin)
+      #?park geo:hasGeometry/geo:asWKT "park" .
+      #BIND( geof:distance(?origin, ?park) AS ?distance )
+      osmrel:47811 ogc:sfContains ?way .
+      ?way osmkey:leisure "park" .
+      ?way osmkey：name ?name
+      ?way geo:hasGeometry/geo:asWKT ?geom .
+      BIND(
+         IF( STRSTARTS(STR(?geom,"POINT"),
+         ?geom
+         geof:centroid(?geom)
+         )AS ?geom_for_distance
+         )
+      BIND( geof:distance(?origin, ?geom_for_distance) AS ?distance )
+      }
+      ORDER BY ASC(?distance)
+      LIMIT 5
