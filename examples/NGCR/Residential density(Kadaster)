@@ -1,0 +1,37 @@
+PREFIX uom: <http://www.opengis.net/def/uom/OGC/1.0/>
+PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
+PREFIX imx-ext: <https://modellen.kkg.kadaster.nl/def/imxgeo-ext#>
+PREFIX nen3610: <http://modellen.geostandaarden.nl/def/nen3610#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?buurtCode (?numResidentialBuildings/?area_m2 AS ?residentialDensity)
+WHERE {
+#calculate the area of buurt
+  ?buurt a imxgeo:Buurt ;
+         imxgeo:buurtcode ?buurtCode ;
+         geo:hasGeometry/geo:asWKT ?buurtGeom ;
+         imxgeo:bevatPerceel ?per .
+  BIND(
+    geof:transform(
+      ?buurtGeom,
+      <http://www.opengis.net/def/crs/EPSG/0/28992>
+    ) AS ?buurtGeom_rd
+  )
+  BIND(
+    geof:area(?buurtGeom_rd, uom:metre) AS ?area_m2
+  )
+#count number of residential building
+  {
+    SELECT ?buurt (COUNT(?geb) AS ?numResidentialBuildings)
+    WHERE {
+      ?geb ext:gebouwType "huizenblok" ;
+           imxgeo:gebruiksdoel "woonfunctie" ;
+           imxgeo:bevindtZichOpPerceel ?per .
+      ?buurt imxgeo:bevatPerceel ?per .
+    }
+    GROUP BY ?buurt
+  }
+}
+
+LIMIT 10
+# Each individual component can be queried successfully; however, executing the complete query results in a timeout.
